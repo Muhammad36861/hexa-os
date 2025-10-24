@@ -15,17 +15,28 @@ void clear_screen(uint8_t color) {
             putpixel(x, y, color);
 }
 
+void draw_rect(int x, int y, int w, int h, uint8_t color) {
+    for (int j = y; j < y + h; j++)
+        for (int i = x; i < x + w; i++)
+            putpixel(i, j, color);
+}
+
 void kernel_main(void) {
-    clear_screen(1); // Blue background
-    // draw taskbar
-    for (int y = 180; y < 200; y++)
-        for (int x = 0; x < VGA_WIDTH; x++)
-            putpixel(x, y, 8); // Gray taskbar
+    clear_screen(1); // Blue background (like Win10)
+    
+    // Taskbar
+    draw_rect(0, VGA_HEIGHT - 20, VGA_WIDTH, 20, 8);
 
-    // start button
-    for (int y = 182; y < 198; y++)
-        for (int x = 5; x < 45; x++)
-            putpixel(x, y, 2); // Green Start
+    // Start button
+    draw_rect(5, VGA_HEIGHT - 18, 35, 16, 2);
 
-    for(;;);
+    // “Start” text (simple placeholder)
+    uint8_t* text = (uint8_t*)0xB8000;
+    const char* msg = "Hexa OS";
+    for (int i = 0; msg[i] != 0; i++) {
+        text[i * 2] = msg[i];
+        text[i * 2 + 1] = 0x0F;
+    }
+
+    for (;;) ;
 }
