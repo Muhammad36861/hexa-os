@@ -5,8 +5,8 @@
 #define VGA_ADDRESS 0xA0000
 
 void putpixel(int x, int y, uint8_t color) {
-    uint8_t* VGA = (uint8_t*)VGA_ADDRESS;
-    VGA[(y * VGA_WIDTH) + x] = color;
+    uint8_t* vga = (uint8_t*)VGA_ADDRESS;
+    vga[y * VGA_WIDTH + x] = color;
 }
 
 void clear_screen(uint8_t color) {
@@ -21,22 +21,10 @@ void draw_rect(int x, int y, int w, int h, uint8_t color) {
             putpixel(i, j, color);
 }
 
-void kernel_main(void) {
-    clear_screen(1); // Blue background (like Win10)
-    
-    // Taskbar
-    draw_rect(0, VGA_HEIGHT - 20, VGA_WIDTH, 20, 8);
-
-    // Start button
-    draw_rect(5, VGA_HEIGHT - 18, 35, 16, 2);
-
-    // “Start” text (simple placeholder)
-    uint8_t* text = (uint8_t*)0xB8000;
-    const char* msg = "Hexa OS";
-    for (int i = 0; msg[i] != 0; i++) {
-        text[i * 2] = msg[i];
-        text[i * 2 + 1] = 0x0F;
-    }
+void kernel_start64(void) {
+    clear_screen(1); // Blue desktop
+    draw_rect(0, VGA_HEIGHT - 20, VGA_WIDTH, 20, 8); // Taskbar
+    draw_rect(5, VGA_HEIGHT - 18, 35, 16, 2);        // Start button
 
     for (;;) ;
 }
