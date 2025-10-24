@@ -1,4 +1,4 @@
-name: Build Hexa OS ISO (Fast)
+name: Build Hexa OS ISO (Real 64-bit)
 
 on:
   push:
@@ -17,7 +17,15 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt update
-        sudo apt install -y nasm xorriso grub-pc-bin mtools gcc g++ make
+        sudo apt install -y nasm xorriso grub-pc-bin mtools wget tar
+
+    - name: Install prebuilt x86_64-elf GCC toolchain
+      run: |
+        mkdir -p $HOME/cross
+        cd $HOME/cross
+        wget https://github.com/xpack-dev-tools/x86_64-elf-gcc-xpack/releases/download/v13.2.0-1/xpack-x86_64-elf-gcc-13.2.0-1-linux-x64.tar.gz
+        tar -xf xpack-x86_64-elf-gcc-13.2.0-1-linux-x64.tar.gz
+        echo "$HOME/cross/xpack-x86_64-elf-gcc-13.2.0-1/bin" >> $GITHUB_PATH
 
     - name: Build Hexa OS
       run: |
