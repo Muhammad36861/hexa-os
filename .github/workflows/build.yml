@@ -1,22 +1,20 @@
 name: Build Hexa OS
-
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install NASM
-        run: sudo apt install nasm -y
+      - name: Install build tools
+        run: sudo apt install nasm gcc binutils qemu-system-x86 -y
 
       - name: Build Hexa OS
-        run: nasm -f bin boot/boot.asm -o hexaos.bin
+        run: make all
 
-      - name: Upload Artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: hexaos
