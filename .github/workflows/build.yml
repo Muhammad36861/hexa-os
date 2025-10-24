@@ -9,52 +9,50 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout source
-      uses: actions/checkout@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential nasm grub-pc-bin xorriso mtools wget tar qemu-system-x86
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential nasm grub-pc-bin xorriso mtools wget tar qemu-system-x86
 
-    - name: Build 64-bit cross-compiler (x86_64-elf-gcc)
-      run: |
-        mkdir -p $HOME/cross
-        cd $HOME/cross
-        git clone https://sourceware.org/git/binutils-gdb.git --depth=1
-        cd binutils-gdb
-        ./configure --target=x86_64-elf --prefix=$HOME/cross --disable-nls --disable-werror
-        make -j$(nproc)
-        make install
-        cd ..
-        git clone https://gcc.gnu.org/git/gcc.git --depth=1
-        cd gcc
-        ./configure --target=x86_64-elf --prefix=$HOME/cross --disable-nls --enable-languages=c,c++ --without-headers
-        make all-gcc -j$(nproc)
-        make all-target-libgcc -j$(nproc)
-        make install-gcc
-        make install-target-libgcc
-        echo "$HOME/cross/bin" >> $GITHUB_PATH
+      - name: Build 64-bit cross-compiler (x86_64-elf-gcc)
+        run: |
+          mkdir -p $HOME/cross
+          cd $HOME/cross
+          git clone https://sourceware.org/git/binutils-gdb.git --depth=1
+          cd binutils-gdb
+          ./configure --target=x86_64-elf --prefix=$HOME/cross --disable-nls --disable-werror
+          make -j$(nproc)
+          make install
+          cd ..
+          git clone https://gcc.gnu.org/git/gcc.git --depth=1
+          cd gcc
+          ./configure --target=x86_64-elf --prefix=$HOME/cross --disable-nls --enable-languages=c,c++ --without-headers
+          make all-gcc -j$(nproc)
+          make all-target-libgcc -j$(nproc)
+          make install-gcc
+          make install-target-libgcc
+          echo "$HOME/cross/bin" >> $GITHUB_PATH
 
-    - name: Build Hexa OS kernel
-      run: |
-        make clean
-        make all
+      - name: Build Hexa OS kernel
+        run: |
+          make clean
+          make all
 
-    - name: Create bootable ISO
-      run: |
-        mkdir -p iso/boot/grub
-        cp kernel.bin iso/boot/
-        cat > iso/boot/grub/grub.cfg <<EOF
-menuentry "Hexa OS 64-bit" {
-    multiboot2 /boot/kernel.bin
-    boot
-}
-EOF
-        grub-mkrescue -o hexa.iso iso
+      - name: Create bootable ISO
+        run: |
+          mkdir -p iso/boot/grub
+          cp kernel.bin iso/boot/
+          echo 'menuentry "Hexa OS 64-bit" {' > iso/boot/grub/grub.cfg
+          echo '    multiboot2 /boot/kernel.bin' >> iso/boot/grub/grub.cfg
+          echo '    boot' >> iso/boot/grub/grub.cfg
+          echo '}' >> iso/boot/grub/grub.cfg
+          grub-mkrescue -o hexa.iso iso
 
-    - name: Upload ISO
-      uses: actions/upload-artifact@v4
-      with:
-        name: Hexa-OS-64bit
-        path: hexa.iso
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hexa-OS-64bit
+          path: hexa.iso
