@@ -2,8 +2,7 @@ TARGET = hexa
 ISO    = $(TARGET).iso
 KERNEL = kernel.bin
 CC = gcc
-AS     = nasm
-LD     = x86_64-elf-ld
+AS = nasm
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -m64 -nostdlib
 LDFLAGS = -T linker.ld -nostdlib
 
@@ -16,7 +15,7 @@ boot/boot.o: boot/boot64.asm
 	$(AS) -f elf64 $< -o $@
 
 $(KERNEL): $(OBJ)
-	$(LD) $(LDFLAGS) -o $@ $(OBJ)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJ)
 
 $(ISO): $(KERNEL)
 	mkdir -p iso/boot/grub
@@ -30,4 +29,4 @@ clean:
 	rm -rf $(OBJ) $(KERNEL) $(ISO) iso
 
 run: all
-	qemu-system-x86_64 -cdrom $(ISO)
+	qemu-system-x86_64 -m 2G -cdrom $(ISO)
