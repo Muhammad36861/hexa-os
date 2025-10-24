@@ -1,4 +1,4 @@
-name: Build Hexa OS ISO
+name: Build Hexa OS ISO (Fast)
 
 on:
   push:
@@ -17,32 +17,14 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt update
-        sudo apt install -y nasm xorriso grub-pc-bin mtools qemu-system-x86
+        sudo apt install -y nasm xorriso grub-pc-bin mtools gcc g++ make
 
-    - name: Build cross compiler (x86_64-elf)
+    - name: Build Hexa OS
       run: |
-        sudo apt install -y build-essential bison flex libgmp3-dev libmpc-dev libmpfr-dev texinfo
-        wget https://ftp.gnu.org/gnu/binutils/binutils-2.40.tar.gz
-        wget https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.gz
-        tar xf binutils-2.40.tar.gz
-        tar xf gcc-13.2.0.tar.gz
-        mkdir build-binutils build-gcc
-        cd build-binutils
-        ../binutils-2.40/configure --target=x86_64-elf --prefix=/usr/local/cross --with-sysroot --disable-nls --disable-werror
-        make -j$(nproc)
-        sudo make install
-        cd ../build-gcc
-        ../gcc-13.2.0/configure --target=x86_64-elf --prefix=/usr/local/cross --disable-nls --enable-languages=c --without-headers
-        make all-gcc -j$(nproc)
-        sudo make install-gcc
-
-    - name: Build Hexa OS ISO
-      run: |
-        export PATH="/usr/local/cross/bin:$PATH"
         make clean
         make all
 
-    - name: Upload build artifact
+    - name: Upload ISO Artifact
       uses: actions/upload-artifact@v4
       with:
         name: hexa-os-iso
