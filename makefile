@@ -1,17 +1,33 @@
-all: hexaos.bin
+TARGET = hexa
+ISO    = $(TARGET).iso
+KERNEL = kernel.bin
+CC     = x86_64-elf-gcc
+AS     = nasm
+LD     = x86_64-elf-ld
+CFLAGS = -ffreestanding -O2 -Wall -Wextra -m64 -nostdlib
+LDFLAGS = -T linker.ld -nostdlib
 
-boot/boot64.o: boot/boot64.asm
-	nasm -f bin boot/boot64.asm -o boot/boot64.o
+SRC = $(wildcard kernel/*.c kernel/drivers/*.c)
+OBJ = $(SRC:.c=.o) boot/boot.o
 
-kernel/kernel.o: kernel/kernel.c
-	x86_64-elf-gcc -ffreestanding -m64 -c kernel/kernel.c -o kernel/kernel.o
+all: $(ISO)
 
-hexaos.bin: boot/boot64.o kernel/kernel.o linker.ld
-	x86_64-elf-ld -T linker.ld -o hexaos.elf kernel/kernel.o
-	cat boot/boot64.o hexaos.elf > hexaos.bin
+boot/boot.o: boot/boot64.asm
+	$(AS) -f elf64 $< -o $@
 
-run:
-	qemu-system-x86_64 -drive format=raw,file=hexaos.bin
+$(KERNEL): $(OBJ)
+	$(LD) $(LDFLAGS) -o $@ $(OBJ)
+
+$(ISO): $(KERNEL)
+	mkdir -p iso/boot/grub
+	cp $(KERNEL) iso/boot/$(KERNEL)
+	echo 'set timeout=0'                      >  iso/boot/grub/grub.cfg
+	echo 'set default=0'                      >> iso/boot/grub/grub.cfg
+	echo 'menuentry "Hexa OS" { multiboot2 /boot/$(KERNEL) }' >> iso/boot/grub/grub.cfg
+	grub-mkrescue -o $(ISO) iso
 
 clean:
-	rm -f *.o *.bin *.elf
+	rm -rf $(OBJ) $(KERNEL) $(ISO) iso
+
+run: all
+	qemu-system-x86_64 -cdrom $(ISO)
