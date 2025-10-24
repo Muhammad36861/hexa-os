@@ -1,15 +1,15 @@
-name: Build Hexa OS
+name: Build Hexa OS 64-bit
 on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install build tools
-        run: sudo apt install nasm gcc binutils qemu-system-x86 -y
+      - name: Install tools
+        run: sudo apt update && sudo apt install nasm qemu-system-x86 gcc binutils make -y
 
       - name: Build Hexa OS
         run: make all
@@ -17,5 +17,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: hexaos
-          path: hexaos.bin
+          name: hexaos64
+          path: hexaos64.bin
