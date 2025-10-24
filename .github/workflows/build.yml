@@ -1,39 +1,60 @@
-name: Build Hexa OS ISO (Real 64-bit)
+name: Build Hexa OS (64-bit)
 
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
+    - name: Checkout source
       uses: actions/checkout@v4
 
-    - name: Install build dependencies
+    - name: Install dependencies
       run: |
-        sudo apt update
-        sudo apt install -y nasm xorriso grub-pc-bin mtools wget tar
+        sudo apt-get update
+        sudo apt-get install -y build-essential nasm grub-pc-bin xorriso mtools wget tar qemu-system-x86
 
-    - name: Install prebuilt x86_64-elf GCC toolchain
+    - name: Build 64-bit cross-compiler (x86_64-elf-gcc)
       run: |
         mkdir -p $HOME/cross
         cd $HOME/cross
-        wget https://github.com/xpack-dev-tools/x86_64-elf-gcc-xpack/releases/download/v13.2.0-1/xpack-x86_64-elf-gcc-13.2.0-1-linux-x64.tar.gz
-        tar -xf xpack-x86_64-elf-gcc-13.2.0-1-linux-x64.tar.gz
-        echo "$HOME/cross/xpack-x86_64-elf-gcc-13.2.0-1/bin" >> $GITHUB_PATH
+        git clone https://sourceware.org/git/binutils-gdb.git --depth=1
+        cd binutils-gdb
+        ./configure --target=x86_64-elf --prefix=$HOME/cross --disable-nls --disable-werror
+        make -j$(nproc)
+        make install
+        cd ..
+        git clone https://gcc.gnu.org/git/gcc.git --depth=1
+        cd gcc
+        ./configure --target=x86_64-elf --prefix=$HOME/cross --disable-nls --enable-languages=c,c++ --without-headers
+        make all-gcc -j$(nproc)
+        make all-target-libgcc -j$(nproc)
+        make install-gcc
+        make install-target-libgcc
+        echo "$HOME/cross/bin" >> $GITHUB_PATH
 
-    - name: Build Hexa OS
+    - name: Build Hexa OS kernel
       run: |
         make clean
         make all
 
-    - name: Upload ISO Artifact
+    - name: Create bootable ISO
+      run: |
+        mkdir -p iso/boot/grub
+        cp kernel.bin iso/boot/
+        cat > iso/boot/grub/grub.cfg <<EOF
+menuentry "Hexa OS 64-bit" {
+    multiboot2 /boot/kernel.bin
+    boot
+}
+EOF
+        grub-mkrescue -o hexa.iso iso
+
+    - name: Upload ISO
       uses: actions/upload-artifact@v4
       with:
-        name: hexa-os-iso
+        name: Hexa-OS-64bit
         path: hexa.iso
