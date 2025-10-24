@@ -1,7 +1,7 @@
 TARGET = hexa
 ISO    = $(TARGET).iso
 KERNEL = kernel.bin
-CC = x86_64-elf-gcc
+CC = gcc
 AS     = nasm
 LD     = x86_64-elf-ld
 CFLAGS = -ffreestanding -O2 -Wall -Wextra -m64 -nostdlib
