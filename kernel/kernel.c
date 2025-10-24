@@ -1,30 +1,27 @@
+// kernel/kernel.c
 #include <stdint.h>
 
-#define VGA_WIDTH 320
-#define VGA_HEIGHT 200
-#define VGA_ADDRESS 0xA0000
+#define VGA_ADDR 0xB8000
 
-void putpixel(int x, int y, uint8_t color) {
-    uint8_t* vga = (uint8_t*)VGA_ADDRESS;
-    vga[y * VGA_WIDTH + x] = color;
+void clear_screen() {
+    uint16_t *vga = (uint16_t*)VGA_ADDR;
+    for (int i = 0; i < 80*25; i++)
+        vga[i] = 0x0720; // blank space with grey bg
 }
 
-void clear_screen(uint8_t color) {
-    for (int y = 0; y < VGA_HEIGHT; y++)
-        for (int x = 0; x < VGA_WIDTH; x++)
-            putpixel(x, y, color);
+void print(const char *s, int row) {
+    volatile char *vga = (char*)VGA_ADDR + row * 160;
+    while (*s) {
+        *vga++ = *s++;
+        *vga++ = 0x0F;
+    }
 }
 
-void draw_rect(int x, int y, int w, int h, uint8_t color) {
-    for (int j = y; j < y + h; j++)
-        for (int i = x; i < x + w; i++)
-            putpixel(i, j, color);
-}
+void kernel_main() {
+    clear_screen();
+    print("Welcome to Hexa OS 64-bit Kernel", 0);
+    print("Initializing subsystems...", 2);
 
-void kernel_start64(void) {
-    clear_screen(1); // Blue desktop
-    draw_rect(0, VGA_HEIGHT - 20, VGA_WIDTH, 20, 8); // Taskbar
-    draw_rect(5, VGA_HEIGHT - 18, 35, 16, 2);        // Start button
-
-    for (;;) ;
+    // TODO: memory_init(), load_drivers(), gui_init();
+    for (;;) __asm__("hlt");
 }
